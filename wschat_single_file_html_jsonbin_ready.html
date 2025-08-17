@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WSChat</title>
+  <style>
+    :root{
+      --bg:#0f1220; --panel:#151936; --muted:#8b91b3; --text:#f2f3f8; --accent:#7c8cff; --accent-2:#61e4a6; --danger:#ff6b6b;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font:500 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial; background:linear-gradient(120deg, #0d1020, #141a39); color:var(--text)}
+
+    /* Auth */
+    .auth-wrap{display:grid;place-items:center;min-height:100%}
+    .auth-card{width:min(960px,95vw); background:rgba(21,25,54,.9); border:1px solid rgba(255,255,255,.06); backdrop-filter: blur(10px); box-shadow:var(--shadow); border-radius:var(--radius); overflow:hidden; display:grid; grid-template-columns: 1.2fr 1fr}
+    .auth-hero{background:radial-gradient(1200px 200px at 20% -10%, rgba(124,140,255,.25), transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%237c8cff"/><stop offset="1" stop-color="%2361e4a6"/></linearGradient></defs><g fill="none" stroke="url(%23g)" stroke-width="2" opacity="0.35">'+Array.from({length:45},(_,i)=>`<circle cx="${(i*13)%600}" cy="${(i*37)%400}" r="${8+(i%9)}"/>`).join('')+'</g></svg>') center/cover no-repeat; padding:48px; display:flex; flex-direction:column; justify-content:space-between}
+    .brand{display:flex;align-items:center; gap:12px}
+    .logo{width:42px;height:42px; border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); display:grid;place-items:center; font-weight:900; color:#0b1020; box-shadow:0 8px 24px rgba(124,140,255,.35)}
+    .brand h1{margin:0;font-size:28px; letter-spacing:.5px}
+    .hero-copy{max-width:520px}
+    .hero-copy h2{margin:8px 0 10px; font-size:26px}
+    .hero-copy p{margin:0; color:var(--muted)}
+
+    .auth-forms{padding:32px 28px; display:grid; gap:18px}
+    .tabs{display:flex; gap:8px; background:#0f1330; padding:6px; border-radius:12px; width:max-content; border:1px solid rgba(255,255,255,.06)}
+    .tab{padding:10px 14px; border-radius:10px; cursor:pointer; color:var(--muted)}
+    .tab.active{background:linear-gradient(135deg, rgba(124,140,255,.15), rgba(97,228,166,.15)); color:var(--text)}
+    form{display:grid; gap:12px}
+    label{font-size:13px;color:var(--muted)}
+    input,button,select{font:inherit}
+    .field{display:grid; gap:6px}
+    .input{background:#0f1330; border:1px solid rgba(255,255,255,.08); padding:12px 14px; border-radius:12px; color:var(--text)}
+    .row{display:flex; gap:10px}
+    .btn{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b1020; border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 24px rgba(124,140,255,.35), inset 0 -2px 0 rgba(0,0,0,.12)}
+    .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,.12); box-shadow:none}
+    .note{font-size:12px; color:var(--muted)}
+    .alert{padding:10px 12px; border-radius:10px; background:#11163b; border:1px solid rgba(255,255,255,.08); color:#c7ceff}
+
+    /* App */
+    .app{display:grid; grid-template-columns: 300px 1fr 320px; gap:14px; height:100vh; padding:16px}
+    .panel{background:rgba(21,25,54,.9); border:1px solid rgba(255,255,255,.06); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; min-height:0}
+    .panel header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between; gap:8px}
+    .pill{padding:6px 10px; border-radius:999px; background:#0f1330; color:var(--muted); font-size:12px; border:1px solid rgba(255,255,255,.06)}
+
+    .sidebar{padding:10px; display:flex; flex-direction:column; gap:12px}
+    .search{display:flex; gap:8px}
+    .list{overflow:auto; padding:8px}
+    .item{display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; cursor:pointer}
+    .item:hover{background:#12173a}
+    .item.active{background:linear-gradient(135deg, rgba(124,140,255,.12), rgba(97,228,166,.12));}
+    .avatar{width:34px;height:34px;border-radius:10px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0b1020; display:grid;place-items:center; font-weight:900}
+    .sub{color:var(--muted); font-size:12px}
+
+    .messages{display:flex; flex-direction:column; min-height:0}
+    .thread{flex:1; overflow:auto; padding:14px; display:grid; gap:10px; align-content:start}
+    .msg{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start}
+    .bubble{background:#0f1330; border:1px solid rgba(255,255,255,.06); padding:10px 12px; border-radius:14px}
+    .mine .bubble{background:linear-gradient(135deg, rgba(124,140,255,.18), rgba(97,228,166,.18))}
+    .meta{font-size:11px; color:var(--muted)}
+    .composer{padding:10px; border-top:1px solid rgba(255,255,255,.06); display:flex; gap:8px}
+    .composer input{flex:1}
+
+    .rightbar .section{padding:10px; border-bottom:1px solid rgba(255,255,255,.06)}
+    .tags{display:flex; flex-wrap:wrap; gap:8px}
+    .tag{font-size:12px; padding:6px 8px; border-radius:999px; background:#0f1330; border:1px solid rgba(255,255,255,.06); color:var(--muted)}
+
+    .danger{color:var(--danger)}
+
+    @media (max-width: 1100px){
+      .app{grid-template-columns: 1fr; height:auto}
+      .rightbar{order:3}
+      .messages{order:2}
+      .sidebar{order:1}
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <template id="tpl-auth">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-hero">
+          <div class="brand">
+            <div class="logo">WS</div>
+            <h1>WSChat</h1>
+          </div>
+          <div class="hero-copy">
+            <h2>Converse em tempo real ✨</h2>
+            <p>Chat global, grupos privados com código, DMs e pedidos de amizade.</p>
+          </div>
+          <div class="note">Este software funciona direto no navegador.</div>
+        </div>
+        <div class="auth-forms">
+          <div class="tabs">
+            <div class="tab active" data-tab="login">Entrar</div>
+            <div class="tab" data-tab="signup">Criar conta</div>
+          </div>
+          <form id="login" autocomplete="off">
+            <div class="field"><label>Usuário</label><input class="input" name="user" required></div>
+            <div class="field"><label>Senha</label><input class="input" name="pass" type="password" required></div>
+            <div class="row">
+              <button class="btn" type="submit">Entrar</button>
+              <button class="btn ghost" type="button" id="to-signup">Criar conta</button>
+            </div>
+            <div id="login-msg" class="note"></div>
+          </form>
+          <form id="signup" style="display:none" autocomplete="off">
+            <div class="field"><label>Usuário</label><input class="input" name="user" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_\.\-]+" title="Letras, números, _. -"></div>
+            <div class="field"><label>Senha</label><input class="input" name="pass" type="password" required minlength="4"></div>
+            <div class="row">
+              <button class="btn" type="submit">Criar conta</button>
+              <button class="btn ghost" type="button" id="to-login">Já tenho conta</button>
+            </div>
+            <div id="signup-msg" class="note"></div>
+          </form>
+          <div class="alert">Feito por <b>Matttz</b></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-app">
+    <div class="app">
+      <aside class="panel sidebar">
+        <header>
+          <strong>Conversas</strong>
+          <span class="pill" id="me-pill">@me</span>
+        </header>
+        <div class="section" style="padding:10px">
+          <div class="search"><input id="search-users" class="input" placeholder="Buscar usuário..."><button class="btn" id="btn-search" title="Buscar">🔎</button></div>
+        </div>
+        <div class="section" style="padding:10px; display:flex; gap:8px">
+          <button class="btn" id="btn-global"># Global</button>
+          <button class="btn ghost" id="btn-new-group">+ Grupo</button>
+        </div>
+        <div class="section" style="padding:10px; display:flex; gap:8px">
+          <input id="join-code" class="input" placeholder="Código do grupo">
+          <button class="btn ghost" id="btn-join">Entrar</button>
+        </div>
+        <div class="list" id="chat-list"></div>
+      </aside>
+
+      <main class="panel messages">
+        <header>
+          <div><strong id="chat-title"># Global</strong><div class="sub" id="chat-sub"></div></div>
+          <div class="row">
+            <button class="btn ghost" id="btn-add-friend" title="Adicionar amigo do perfil aberto" style="display:none">+ Amigo</button>
+            <button class="btn ghost" id="btn-signout">Sair</button>
+          </div>
+        </header>
+        <div class="thread" id="thread"></div>
+        <div class="composer">
+          <input id="msg-input" class="input" placeholder="Escreva uma mensagem...">
+          <button class="btn" id="btn-send">Enviar</button>
+        </div>
+      </main>
+
+      <aside class="panel rightbar">
+        <header><strong>Amigos & Pedidos</strong><span class="pill" id="friend-count">0</span></header>
+        <div class="section">
+          <div class="tags" id="friends"></div>
+        </div>
+        <header><strong>Pedidos recebidos</strong></header>
+        <div class="section" id="incoming"></div>
+        <header><strong>Pedidos enviados</strong></header>
+        <div class="section" id="outgoing"></div>
+        <header><strong>Grupos</strong></header>
+        <div class="section" id="groups"></div>
+      </aside>
+    </div>
+  </template>
+
+  <script>
+  // ====================== CONFIG JSONBIN ==========================
+  // Preencha com sua BIN para persistência real
+  const BIN_ID = "68a1f40443b1c97be920a673";
+  const MASTER_KEY = "$2a$10$ouuLWd620HBPN/Zy5SJaWeAoyVpaw39YWomcVupuwR23p43Egvp5."; // X-Master-Key (NÃO exponha em produção!)
+  const POLL_MS = 1000; // atualização a cada segundo
+
+  // ====================== STORAGE ADAPTER =========================
+  const Storage = (()=>{
+    const useMock = !BIN_ID || !MASTER_KEY;
+    const LS_KEY = 'WSCHAT_MOCK_STATE_V1';
+
+    const emptyState = ()=>({
+      meta:{createdAt: Date.now(), app:"WSChat", version:1},
+      users:{/* username: {passHash, friends:[], incoming:[], outgoing:[]} */},
+      groups:{
+        GLOBAL:{name:"GLOBAL", code:"GLOBAL", createdAt: Date.now(), members:[], messages:[]}
+      },
+      dms:{/* a__b : {messages:[]} */}
+    });
+
+    async function hash(str){
+      const enc = new TextEncoder().encode(str);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    async function getState(){
+      if(useMock){
+        const raw = localStorage.getItem(LS_KEY);
+        return raw? JSON.parse(raw) : emptyState();
+      }
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers:{'X-Master-Key': MASTER_KEY}
+      });
+      if(!res.ok){ throw new Error('Falha ao ler BIN'); }
+      const json = await res.json();
+      Storage._etag = res.headers.get('ETag') || undefined;
+      return json.record || emptyState();
+    }
+
+    async function saveState(state){
+      if(useMock){ localStorage.setItem(LS_KEY, JSON.stringify(state)); return state; }
+      const headers = {'Content-Type':'application/json','X-Master-Key': MASTER_KEY};
+      // Optional: optimistic concurrency with If-Match
+      if(Storage._etag) headers['If-Match'] = Storage._etag;
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method:'PUT', headers, body: JSON.stringify(state)
+      });
+      if(!res.ok){ throw new Error('Falha ao salvar BIN (ETag mudou?).'); }
+      Storage._etag = res.headers.get('ETag') || undefined;
+      return (await res.json()).record || state;
+    }
+
+    return { getState, saveState, hash, useMock };
+  })();
+
+  // ====================== APP LOGIC ===============================
+  const App = (()=>{
+    let state = null; // estado vindo da BIN
+    let me = null;    // username logado
+    let active = { type:'group', id:'GLOBAL' }; // conversa ativa
+    let poller = null;
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    function renderAuth(){
+      $('#root').innerHTML = $('#tpl-auth').innerHTML;
+      const tabs = $$('.tab');
+      const login = $('#login');
+      const signup = $('#signup');
+      const loginMsg = $('#login-msg');
+      const signupMsg = $('#signup-msg');
+
+      function setTab(id){
+        tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
+        login.style.display = id==='login'? 'grid':'none';
+        signup.style.display = id==='signup'? 'grid':'none';
+      }
+      tabs.forEach(t=>t.onclick = ()=> setTab(t.dataset.tab));
+      $('#to-signup').onclick = ()=> setTab('signup');
+      $('#to-login').onclick = ()=> setTab('login');
+
+      login.onsubmit = async (e)=>{
+        e.preventDefault();
+        const user = login.user.value.trim();
+        const pass = login.pass.value;
+        await ensureState();
+        const u = state.users[user];
+        if(!u){ loginMsg.textContent = 'Usuário não existe.'; return; }
+        const ok = (await Storage.hash(pass)) === u.passHash;
+        if(!ok){ loginMsg.textContent = 'Senha incorreta.'; return; }
+        localStorage.setItem('WSCHAT_USER', user);
+        me = user; goApp();
+      };
+
+      signup.onsubmit = async (e)=>{
+        e.preventDefault();
+        const user = signup.user.value.trim();
+        const pass = signup.pass.value;
+        await ensureState();
+        if(state.users[user]){ signupMsg.textContent = 'Usuário já existe.'; return; }
+        state.users[user] = { passHash: await Storage.hash(pass), friends:[], incoming:[], outgoing:[] };
+        await Storage.saveState(state);
+        signupMsg.textContent = 'Conta criada! Você já pode entrar.';
+        setTab('login');
+      };
+    }
+
+    function goApp(){
+      $('#root').innerHTML = $('#tpl-app').innerHTML;
+      $('#me-pill').textContent = '@'+me;
+      $('#btn-signout').onclick = ()=>{ localStorage.removeItem('WSCHAT_USER'); location.reload(); };
+      $('#btn-global').onclick = ()=> setActive({type:'group', id:'GLOBAL'});
+      $('#btn-new-group').onclick = createGroup;
+      $('#btn-join').onclick = joinGroup;
+      $('#btn-send').onclick = sendMessage;
+      $('#msg-input').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+      $('#btn-search').onclick = ()=> searchUsers($('#search-users').value.trim());
+      $('#search-users').addEventListener('keydown', e=>{ if(e.key==='Enter') searchUsers(e.target.value.trim()); });
+
+      startPolling();
+    }
+
+    async function ensureState(){
+      if(!state){ state = await Storage.getState(); }
+    }
+
+    function startPolling(){
+      clearInterval(poller);
+      const tick = async ()=>{
+        try{
+          const latest = await Storage.getState();
+          if(JSON.stringify(latest)!==JSON.stringify(state)){
+            state = latest;
+            renderLists();
+            renderThread();
+          }
+        }catch(err){ console.warn('poll err', err); }
+      };
+      // initial
+      (async()=>{ await ensureState(); renderLists(); renderThread(); })();
+      poller = setInterval(tick, POLL_MS);
+    }
+
+    function setActive(a){ active = a; renderLists(); renderThread(); }
+
+    function idDM(a,b){ return [a,b].sort().join('__'); }
+
+    function renderLists(){
+      // Chats list: Global, Groups (where I am), DMs with friends
+      const myGroups = Object.values(state.groups).filter(g=> g.code==='GLOBAL' || (g.members||[]).includes(me));
+      const groupNodes = myGroups.map(g=> itemNode({
+        id:g.code, label:'# '+g.name, sub: g.code, type:'group', active: active.type==='group' && active.id===g.code
+      })).join('');
+
+      const dmIds = (state.users[me]?.friends||[]).map(f=> idDM(me,f));
+      const dmNodes = dmIds.map(id=>{
+        const [a,b] = id.split('__');
+        const other = a===me? b : a;
+        return itemNode({ id, label:'@ '+other, sub:'DM', type:'dm', active: active.type==='dm' && active.id===id });
+      }).join('');
+
+      $('#chat-list').innerHTML = `
+        <div class="sub" style="padding:8px 10px">Grupos</div>
+        ${groupNodes || '<div class="sub" style="padding:0 10px 10px">(sem grupos)</div>'}
+        <div class="sub" style="padding:8px 10px">Mensagens diretas</div>
+        ${dmNodes || '<div class="sub" style="padding:0 10px 10px">(adicione amigos)</div>'}
+      `;
+
+      $$('#chat-list .item').forEach(el=>{
+        el.onclick = ()=> setActive({type: el.dataset.type, id: el.dataset.id});
+      });
+
+      // Friends summary
+      const friends = state.users[me]?.friends||[];
+      $('#friend-count').textContent = friends.length;
+      $('#friends').innerHTML = friends.map(u=>`<span class="tag">@${u} <button data-u="${u}" class="btn ghost" style="padding:4px 8px; margin-left:6px">DM</button></span>`).join('') || '<span class="sub">(sem amigos)</span>';
+      $$('#friends .btn').forEach(b=> b.onclick = ()=> setActive({type:'dm', id: idDM(me,b.dataset.u) }));
+
+      // Requests
+      const incoming = state.users[me]?.incoming||[];
+      const outgoing = state.users[me]?.outgoing||[];
+      $('#incoming').innerHTML = incoming.map(u=>`<div class="row" style="align-items:center; gap:8px; margin:4px 0"><span class="tag">@${u}</span><button class="btn" data-acc="${u}">Aceitar</button><button class="btn ghost" data-rec="${u}">Recusar</button></div>`).join('') || '<div class="sub">(nenhum)</div>';
+      $('#outgoing').innerHTML = outgoing.map(u=>`<div class="tag">@${u}</div>`).join('') || '<div class="sub">(nenhum)</div>';
+      $$('#incoming [data-acc]').forEach(b=> b.onclick = ()=> respondRequest(b.dataset.acc, true));
+      $$('#incoming [data-rec]').forEach(b=> b.onclick = ()=> respondRequest(b.dataset.rec, false));
+
+      // Groups panel
+      $('#groups').innerHTML = Object.values(state.groups).filter(g=>g.code!=='GLOBAL').map(g=>`<div class="item" style="padding:8px"><div class="avatar">#</div><div><div>${g.name}</div><div class="sub">${g.code}</div></div></div>`).join('') || '<div class="sub">(crie um grupo)</div>';
+    }
+
+    function itemNode({id,label,sub,type,active}){
+      return `<div class="item ${active? 'active':''}" data-id="${id}" data-type="${type}"><div class="avatar">${label[0]}</div><div><div>${label}</div><div class="sub">${sub||''}</div></div></div>`;
+    }
+
+    function renderThread(){
+      const title = $('#chat-title');
+      const sub = $('#chat-sub');
+      let msgs = [];
+      if(active.type==='group'){
+        const g = state.groups[active.id];
+        title.textContent = '# '+(g?.name||active.id);
+        sub.textContent = g? `${(g.members||[]).length} membros · código ${g.code}` : '';
+        msgs = g?.messages||[];
+      }else{
+        const [a,b] = active.id.split('__'); const other = a===me? b:a;
+        title.textContent = '@ '+other;
+        sub.textContent = 'Mensagem direta';
+        const dm = state.dms[active.id]||(state.dms[active.id]={messages:[]});
+        msgs = dm.messages;
+      }
+
+      $('#thread').innerHTML = msgs.slice(-500).map(m=>{
+        const mine = m.from===me;
+        return `<div class="msg ${mine? 'mine':''}">
+          <div class="avatar" data-user="${m.from}" title="Ver perfil">${m.from[0].toUpperCase()}</div>
+          <div class="bubble">
+            <div style="display:flex; justify-content:space-between; gap:10px"><strong>@${m.from}</strong><span class="meta">${fmtTime(m.ts)}</span></div>
+            <div>${escapeHTML(m.text)}</div>
+            <div class="row" style="gap:8px; margin-top:6px"><button class="btn ghost small" data-add="${m.from}">+ Amigo</button><button class="btn ghost small" data-dm="${m.from}">DM</button></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // click handlers
+      $$('#thread [data-add]').forEach(b=> b.onclick = ()=> sendFriendRequest(b.dataset.add));
+      $$('#thread [data-dm]').forEach(b=> b.onclick = ()=> setActive({type:'dm', id:idDM(me,b.dataset.dm)}));
+
+      // autoscroll
+      const thr = $('#thread'); thr.scrollTop = thr.scrollHeight;
+    }
+
+    async function createGroup(){
+      await ensureState();
+      const name = prompt('Nome do grupo:','Novo Grupo');
+      if(!name) return;
+      const code = genCode();
+      state.groups[code] = { name, code, createdAt: Date.now(), members:[me], messages:[] };
+      await Storage.saveState(state);
+      setActive({type:'group', id: code});
+      toast(`Grupo ${name} criado. Código: ${code}`);
+    }
+
+    async function joinGroup(){
+      await ensureState();
+      const code = ($('#join-code').value||'').trim();
+      if(!code || !state.groups[code]){ toast('Código inválido.', true); return; }
+      const g = state.groups[code];
+      if(!g.members.includes(me)) g.members.push(me);
+      await Storage.saveState(state);
+      setActive({type:'group', id: code});
+      toast(`Você entrou em #${g.name}`);
+    }
+
+    async function sendMessage(){
+      const input = $('#msg-input');
+      const text = input.value.trim();
+      if(!text) return;
+      await ensureState();
+      const msg = { id: crypto.randomUUID(), from: me, text, ts: Date.now() };
+      if(active.type==='group'){
+        const g = state.groups[active.id];
+        if(!g) return toast('Grupo não encontrado', true);
+        if(g.code!=='GLOBAL' && !g.members.includes(me)) g.members.push(me);
+        g.messages.push(msg);
+      }else{
+        const id = active.id; const dm = state.dms[id]||(state.dms[id]={messages:[]});
+        dm.messages.push(msg);
+      }
+      input.value='';
+      await Storage.saveState(state);
+      renderThread();
+    }
+
+    async function searchUsers(q){
+      await ensureState();
+      const users = Object.keys(state.users).filter(u=> u.toLowerCase().includes(q.toLowerCase())).slice(0,20);
+      if(users.length===0){ toast('Nenhum usuário encontrado'); return; }
+      const pick = prompt('Resultados:\n'+users.map(u=>'@'+u).join('\n')+'\n\nDigite o @ para abrir DM ou enviar pedido:', '@'+users[0]);
+      if(!pick) return;
+      const u = pick.replace(/^@/,'');
+      const dmId = idDM(me,u);
+      const choice = confirm(`Abrir DM com @${u}? (OK = DM, Cancelar = Pedido de Amizade)`);
+      if(choice){ setActive({type:'dm', id: dmId}); }
+      else{ sendFriendRequest(u); }
+    }
+
+    async function sendFriendRequest(user){
+      if(user===me) return toast('Você já é você mesmo 🙂', true);
+      await ensureState();
+      const U = state.users;
+      if(!U[user]) return toast('Usuário não existe.', true);
+      if((U[me].friends||[]).includes(user)) return toast('Vocês já são amigos.');
+      if((U[me].outgoing||[]).includes(user)) return toast('Pedido já enviado.');
+      U[me].outgoing.push(user);
+      U[user].incoming.push(me);
+      await Storage.saveState(state);
+      renderLists();
+      toast('Pedido enviado!');
+    }
+
+    async function respondRequest(user, accept){
+      await ensureState();
+      const mine = state.users[me];
+      const other = state.users[user];
+      mine.incoming = (mine.incoming||[]).filter(u=>u!==user);
+      if(accept){
+        mine.friends.push(user);
+        other.friends.push(me);
+        // remove outgoing correspondente
+        other.outgoing = (other.outgoing||[]).filter(u=>u!==me);
+      }else{
+        other.outgoing = (other.outgoing||[]).filter(u=>u!==me);
+      }
+      await Storage.saveState(state);
+      renderLists();
+    }
+
+    function fmtTime(ts){
+      const d = new Date(ts);
+      return d.toLocaleString();
+    }
+
+    function escapeHTML(s){
+      return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    }
+
+    function genCode(){
+      const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let s=''; for(let i=0;i<6;i++) s+= chars[Math.floor(Math.random()*chars.length)];
+      return s;
+    }
+
+    function toast(msg, danger){
+      const el = document.createElement('div');
+      el.textContent = msg; el.style.position='fixed'; el.style.right='16px'; el.style.bottom='16px'; el.style.padding='12px 14px'; el.style.borderRadius='12px'; el.style.background = danger? 'rgba(255,107,107,.9)':'rgba(124,140,255,.9)'; el.style.color='#0b1020'; el.style.boxShadow='var(--shadow)';
+      document.body.appendChild(el); setTimeout(()=>{ el.remove(); }, 2200);
+    }
+
+    // boot
+    (async function init(){
+      const user = localStorage.getItem('WSCHAT_USER');
+      await ensureState();
+      if(user && state.users[user]){ me = user; goApp(); }
+      else{ renderAuth(); }
+    })();
+
+    return {};
+  })();
+  </script>
+</body>
+</html>
