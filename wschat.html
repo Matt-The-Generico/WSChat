@@ -94,6 +94,7 @@
             <p>Chat global, grupos privados com código, DMs e pedidos de amizade.</p>
           </div>
           <div class="note">Este software funciona direto no navegador.</div>
+		  <button class="btn" onclick="window.open('https://livepix.gg/mattthegenerico')">💖 Me Apoie!</button>
         </div>
         <div class="auth-forms">
           <div class="tabs">
@@ -179,7 +180,7 @@
   // ====================== CONFIG JSONBIN ==========================
   // Preencha com sua BIN para persistência real
   const BIN_ID = "68a1f40443b1c97be920a673";
-  const MASTER_KEY = "$2a$10$ouuLWd620HBPN/Zy5SJaWeAoyVpaw39YWomcVupuwR23p43Egvp5."; // X-Master-Key (NÃO é bom expor isso)
+  const MASTER_KEY = "$2a$10$ouuLWd620HBPN/Zy5SJaWeAoyVpaw39YWomcVupuwR23p43Egvp5."; // X-Master-Key (NÃO exponha em produção!)
   const POLL_MS = 1000; // atualização a cada segundo
 
   // ====================== STORAGE ADAPTER =========================
@@ -234,6 +235,9 @@
 
   // ====================== APP LOGIC ===============================
   const App = (()=>{
+if("Notification" in window && Notification.permission !== "granted"){
+  Notification.requestPermission();
+}
     let state = null; // estado vindo da BIN
     let me = null;    // username logado
     let active = { type:'group', id:'GLOBAL' }; // conversa ativa
@@ -311,6 +315,39 @@
           const latest = await Storage.getState();
           if(JSON.stringify(latest)!==JSON.stringify(state)){
             state = latest;
+			// Notificações de grupos
+for(const code in state.groups){
+  const g = state.groups[code];
+  const oldMsgs = (Storage._lastState?.groups?.[code]?.messages?.length) || 0;
+  const newMsgs = g.messages.length;
+  if(newMsgs > oldMsgs){
+    const msg = g.messages[newMsgs-1];
+    if(msg.from !== me) notify(`#${g.name}`, `@${msg.from}: ${msg.text}`);
+  }
+}
+
+// Notificações de DMs
+for(const id in state.dms){
+  const dm = state.dms[id];
+  const oldMsgs = (Storage._lastState?.dms?.[id]?.messages?.length) || 0;
+  const newMsgs = dm.messages.length;
+  if(newMsgs > oldMsgs){
+    const msg = dm.messages[newMsgs-1];
+    const [a,b] = id.split('__'); 
+    const other = a===me? b : a;
+    if(msg.from !== me) notify(`DM de @${other}`, msg.text);
+  }
+}
+
+// Notificações de pedidos de amizade
+const oldIncoming = Storage._lastState?.users?.[me]?.incoming || [];
+const newIncoming = state.users[me]?.incoming || [];
+newIncoming.forEach(u=>{
+  if(!oldIncoming.includes(u)) notify("Pedido de amizade", `@${u} quer ser seu amigo`);
+});
+
+// Atualiza o lastState do Storage para comparar no próximo tick
+Storage._lastState = JSON.parse(JSON.stringify(state));
             renderLists();
             renderThread();
           }
@@ -523,7 +560,12 @@
       if(user && state.users[user]){ me = user; goApp(); }
       else{ renderAuth(); }
     })();
-
+	
+function notify(title, body){
+  if(Notification.permission === "granted"){
+    new Notification(title, { body });
+  }
+}
     return {};
   })();
   </script>
