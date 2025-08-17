@@ -1,23 +1,23 @@
 # WSChat
 WSChat é um chat global, com grupos privados com código, DMs e sistema de amizades.
 
-> ⚠️ Apesar do nome ("WS"), o projeto **não usa WebSockets**. O "WS" significa:
+⚠️ Apesar do nome ("WS"), o projeto **não usa WebSockets**. O "WS" significa:
 
-WhisperSpace
+> WhisperSpace
 
-WordStream
+> WordStream
 
-WiredSpeak
+> WiredSpeak
 
-WonderSpeak
+> WonderSpeak
 
-WackyShenanigans
+> WackyShenanigans
 
-WallStreet
+> WallStreet
 
-WarpSpeed
+> WarpSpeed
 
-WindowShade
+> WindowShade
 
 ## 📄 Licença
 Este projeto está licenciado sob a [MIT License](LICENSE).
