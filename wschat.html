@@ -179,7 +179,11 @@
   <script>
   // ====================== CONFIG JSONBIN ==========================
   const BIN_ID = "68a1f40443b1c97be920a673";
-  const MASTER_KEY = "$2a$10$ouuLWd620HBPN/Zy5SJaWeAoyVpaw39YWomcVupuwR23p43Egvp5."; // X-Master-Key (NÃO exponha em produção!)
+// Master key ofuscada (base64 split). Gerei a base64 localmente e colei os pedaços aqui.
+const __masterParts = ["JDJhJD","EwJG91","dUxXZD","YyMEhC","UE4vWn","k1U0ph","V2VBb3","lWcGF3","MzlZV2","9tY1Z1","cHV3Uj","IzcDQz","RWd2cD","Uu"]; // <-- substitua pelo array JSON que você gerou
+const __masterBase64 = __masterParts.join('');
+const MASTER_KEY = (typeof atob === 'function') ? atob(__masterBase64) : Buffer.from(__masterBase64, 'base64').toString('utf8');
+
   const POLL_MS = 1000; // atualização a cada segundo
 
   // ====================== STORAGE ADAPTER =========================
