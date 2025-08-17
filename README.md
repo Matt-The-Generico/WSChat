@@ -19,5 +19,7 @@ WSChat é um chat global, com grupos privados com código, DMs e sistema de amiz
 
 > WindowShade
 
+⚠️ Cada grupo, amizade ou mensagem gasta requisições (que custam dinheiro real para manter)! Se curtir o WSChat, me ajude com um PIX: https://livepix.gg/mattthegenerico 💖
+
 ## 📄 Licença
 Este projeto está licenciado sob a [MIT License](LICENSE).
