@@ -179,9 +179,9 @@
   <script>
   // ====================== CONFIG JSONBIN ==========================
   const BIN_ID = "68a1f40443b1c97be920a673";
-const __masterParts = ["JDJhJD","EwJG91","dUxXZD","YyMEhC","UE4vWn","k1U0ph","V2VBb3","lWcGF3","MzlZV2","9tY1Z1","cHV3Uj","IzcDQz","RWd2cD","Uu"];
-const __masterBase64 = __masterParts.join('');
-const MASTER_KEY = (typeof atob === 'function') ? atob(__masterBase64) : Buffer.from(__masterBase64, 'base64').toString('utf8');
+const __master1 = ["JDJhJD","EwJG91","dUxXZD","YyMEhC","UE4vWn","k1U0ph","V2VBb3","lWcGF3","MzlZV2","9tY1Z1","cHV3Uj","IzcDQz","RWd2cD","Uu"];
+const __master2 = __master1.join('');
+const MASTER_KEY = (typeof atob === 'function') ? atob(__master2) : Buffer.from(__master2, 'base64').toString('utf8');
 
   const POLL_MS = 1000; // atualização a cada segundo
 
